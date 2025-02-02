@@ -10,5 +10,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/iDrunK65/hass-inforoute65/issues",
   "requirements": [],
-  "version": "0.0.3"
+  "version": "0.0.8"
 }
