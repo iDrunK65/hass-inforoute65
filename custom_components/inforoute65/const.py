@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from homeassistant.const import Platform
 
-DOMAIN: Final = "inforoute_65"
+DOMAIN: Final = "inforoute65"
 PLATFORMS: Final = [Platform.BUTTON, Platform.SENSOR]
 
 DEFAULT_NAME: Final = "Inforoute 65"
