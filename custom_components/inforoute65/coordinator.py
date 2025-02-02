@@ -24,7 +24,7 @@ class Inforoute65DataUpdateCoordinator(DataUpdateCoordinator):
             async with aiohttp.ClientSession() as session:
                 with async_timeout.timeout(10):
                     resp = await session.get(self.api_url)
-                    data = await resp.json()
+                    data = await resp.json(content_type=None)
 
             all_items = data.get("OI", [])
             # Filtrer si besoin
