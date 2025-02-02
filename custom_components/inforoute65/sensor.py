@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
-from .coordinator import InforouteDataUpdateCoordinator
+from .coordinator import Inforoute65DataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ async def async_setup_entry(
     Configure la plateforme sensor lors du chargement de l’intégration.
     Crée une entité pour chaque section de route retournée par le coordinator.
     """
-    coordinator: InforouteDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+    coordinator: Inforoute65DataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     entities = []
     for item in coordinator.data:
@@ -60,7 +60,7 @@ class InforouteSectionSensor(CoordinatorEntity, SensorEntity):
 
     def __init__(
             self,
-            coordinator: InforouteDataUpdateCoordinator,
+            coordinator: Inforoute65DataUpdateCoordinator,
             item: dict,
             name: str,
             unique_id: str,
