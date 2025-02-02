@@ -4,10 +4,11 @@
   "codeowners": [
     "@iDrunK65"
   ],
+  "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/iDrunK65/hass-inforoute65",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/iDrunK65/hass-inforoute65/issues",
   "requirements": [],
-  "version": "0.0.2"
+  "version": "0.0.3"
 }
