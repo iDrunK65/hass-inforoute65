@@ -5,7 +5,7 @@ import logging
 from homeassistant import config_entries
 from homeassistant.core import callback
 
-from .const import DOMAIN, DEFAULT_API_URL
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,7 +27,6 @@ class Inforoute65ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         # Formulaire à afficher
         data_schema = vol.Schema({
-            vol.Required("api_url", default=DEFAULT_API_URL): str,
             vol.Required("scan_interval", default=10): vol.All(int, vol.Range(min=10)),
         })
 
