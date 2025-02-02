@@ -1,0 +1,13 @@
+{
+  "domain": "inforoute65",
+  "name": "Inforoute 65",
+  "codeowners": [
+    "@iDrunK65"
+  ],
+  "dependencies": [],
+  "documentation": "https://github.com/iDrunK65/hass-inforoute65",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/iDrunK65/hass-inforoute65/issues",
+  "requirements": [],
+  "version": "0.0.1"
+}
