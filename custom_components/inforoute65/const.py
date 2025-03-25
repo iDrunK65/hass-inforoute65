@@ -1,15 +1,13 @@
 """Constants for the Inforoute 65 integration."""
 
 from typing import Final
-from datetime import timedelta
-
 from homeassistant.const import Platform
 
 DOMAIN: Final = "inforoute65"
 PLATFORMS: Final = [Platform.BUTTON, Platform.SENSOR]
 
 DEFAULT_NAME: Final = "Inforoute 65"
-DEFAULT_SCAN_INTERVAL = timedelta(minutes=10)
+DEFAULT_SCAN_INTERVAL: Final = 10
 
 DEFAULT_API_URL = (
     "https://inforoute.ha-py.fr/myd/proxy.php?cluster=&tifid="

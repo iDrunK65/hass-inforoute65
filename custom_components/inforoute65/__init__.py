@@ -1,47 +1,50 @@
+"""Initialisation de l’intégration Inforoute 65."""
+
 import logging
 from datetime import timedelta
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN, DEFAULT_API_URL, DEFAULT_SCAN_INTERVAL
+from .const import DOMAIN, PLATFORMS, DEFAULT_SCAN_INTERVAL, DEFAULT_API_URL
 from .coordinator import Inforoute65DataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor"]  # ou ["sensor", "button", etc.]
-
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Setup via configuration.yaml, si besoin. Ici on ne l'utilise pas."""
+    """Setup via configuration.yaml (non utilisé ici)."""
     return True
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Chargement de l'intégration depuis l'UI."""
-    # On récupère la valeur du scan_interval
+    """
+    Chargement de l’intégration quand l’utilisateur l’ajoute via l’UI (config_flow).
+    """
+    # Récupérer l’intervalle en minutes (entier) depuis la config
     scan_interval = entry.data.get("scan_interval", DEFAULT_SCAN_INTERVAL)
+    update_interval = timedelta(minutes=scan_interval)
 
-    # On utilise l’URL fixée en dur
+    # URL non configurable
     api_url = DEFAULT_API_URL
 
-    # On crée le coordinateur
+    # Créer le coordinator
     coordinator = Inforoute65DataUpdateCoordinator(
         hass,
         api_url,
-        timedelta(minutes=scan_interval),
+        update_interval
     )
     await coordinator.async_config_entry_first_refresh()
 
+    # Stocker le coordinator dans hass.data
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = coordinator
 
-    # On charge la/les plateformes
+    # Charger la/les plateformes
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Déchargement de l'intégration."""
+    """Déchargement de l’intégration."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
