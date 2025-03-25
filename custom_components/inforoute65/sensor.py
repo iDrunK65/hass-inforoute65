@@ -10,26 +10,33 @@ from .coordinator import Inforoute65DataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
+# Correspondance des couleurs -> (niveau, texte)
+COLOR_MAP = {
+    "00FF00": ("C1", "Circulation normale"),
+    "FFFF00": ("C2", "Circulation délicate"),
+    "FF0000": ("C3", "Circulation difficile"),
+    "000000": ("C4", "Circulation impossible"),
+    "800080": ("FH", "Route fermée l'hiver"),
+    "0000FF": ("DTV", "Déviation tous véhicules"),
+    "00FFFF": ("DVL", "Déviation VL seuls"),
+    "993300": ("BD1", "Barrière de dégel limitation 12T"),
+    "FF00FF": ("BD2", "Barrière de dégel limitation 7,5T"),
+    "969696": ("BD3", "Barrière de dégel sans limitation"),
+}
 
 async def async_setup_entry(
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        async_add_entities
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities
 ) -> None:
-    """
-    Configure la plateforme sensor lors du chargement de l’intégration.
-    Crée 3 entités distinctes (Circulation, Emplacement, Diagnostics)
-    par section de route.
-    """
     coordinator: Inforoute65DataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-
     sensors = []
+
     for item in coordinator.data:
         pid = item.get("pid")
         tifid = item.get("tifid") or pid
         lib = item.get("lib", "Route inconnue")
-
-        unique_base = f"{tifid}"  # base pour l'unique_id de chaque sensor
+        unique_base = f"{tifid}"
 
         # 1) Capteur "Circulation"
         sensors.append(
@@ -53,7 +60,7 @@ async def async_setup_entry(
             )
         )
 
-        # 3) Capteur "Diagnostics" (marqué comme diagnostic dans l'UI)
+        # 3) Capteur "Diagnostics"
         sensors.append(
             InforouteSectionDiagnosticSensor(
                 coordinator=coordinator,
@@ -66,13 +73,7 @@ async def async_setup_entry(
 
     async_add_entities(sensors, update_before_add=True)
 
-
 class BaseInforouteSensor(CoordinatorEntity, SensorEntity):
-    """
-    Classe de base pour partager le device_info.
-    Chaque sensor hérite de cette classe et définit son propre 'state' et 'attributes'.
-    """
-
     def __init__(self, coordinator, item, name, unique_id, device_name):
         super().__init__(coordinator)
         self._item = item
@@ -82,64 +83,52 @@ class BaseInforouteSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def device_info(self):
-        """
-        Retourne le même "appareil" pour les 3 capteurs de la même section de route,
-        en utilisant pid/tifid comme identifiant unique.
-        """
-        # On peut prendre pid ou tifid pour l'identifiant du device
         pid = self._item.get("pid")
         tifid = self._item.get("tifid") or pid
 
         return {
             "identifiers": {(DOMAIN, f"{DOMAIN}_{tifid}")},
-            "name": self._device_name,  # ex. "COL DE SPANDELLES"
+            "name": self._device_name,
             "manufacturer": "Ha-Py Region",
             "model": "Inforoute Sensor",
         }
 
-
 class InforouteSectionCirculationSensor(BaseInforouteSensor):
     """
-    Capteur "Circulation" :
-      - state = level_title
-      - attributs = level_color, level, level_title
+    Affiche un état en fonction de la couleur, dérivée de l'API (item["color"]).
+    On mappe la couleur via COLOR_MAP pour obtenir (niveau, texte).
     """
 
     @property
-    def state(self) -> str:
-        """Retourne 'level_title' comme état principal."""
-        return self._item.get("level_title") or "Inconnu"
+    def state(self):
+        # On calcule le texte en se basant sur la couleur
+        color = (self._item.get("color") or "").upper()
+        _, texte = COLOR_MAP.get(color, ("??", "Inconnu"))
+        # L'état principal sera le texte, ex: "Circulation normale"
+        return texte
 
     @property
-    def extra_state_attributes(self) -> dict:
-        """Inclut la couleur brute, le niveau (C1, C2...), etc."""
+    def extra_state_attributes(self):
+        # On récupère la couleur, cherche le niveau+texte, et on renvoie tout
+        color = (self._item.get("color") or "").upper()
+        niveau, texte = COLOR_MAP.get(color, ("??", "Inconnu"))
         return {
-            "level_color": self._item.get("level_color"),
-            "level": self._item.get("level"),
-            "level_title": self._item.get("level_title"),
+            "level_color": color,
+            "level": niveau,
+            "level_title": texte,
         }
 
     @property
     def icon(self) -> str:
-        """Icône personnalisée pour la circulation."""
         return "mdi:car-brake-alert"
 
-
 class InforouteSectionEmplacementSensor(BaseInforouteSensor):
-    """
-    Capteur "Emplacement" :
-      - state = address
-      - attributs = lat, lng, address
-    """
-
     @property
-    def state(self) -> str:
-        """Retourne l'adresse comme état."""
+    def state(self):
         return self._item.get("address") or "Adresse inconnue"
 
     @property
-    def extra_state_attributes(self) -> dict:
-        """Inclut la lat, lng, address."""
+    def extra_state_attributes(self):
         return {
             "lat": self._item.get("lat"),
             "lng": self._item.get("lng"),
@@ -148,41 +137,25 @@ class InforouteSectionEmplacementSensor(BaseInforouteSensor):
 
     @property
     def icon(self) -> str:
-        """Icône personnalisée pour l'emplacement."""
         return "mdi:map-marker"
 
-
 class InforouteSectionDiagnosticSensor(BaseInforouteSensor):
-    """
-    Capteur "Diagnostics" :
-      - entity_category = EntityCategory.DIAGNOSTIC
-      - state = tifid (ou None)
-      - attributs = tifid, equipment, poid
-    """
-
     @property
-    def state(self) -> str:
-        """Retourne tifid comme état principal."""
+    def state(self):
         return self._item.get("tifid") or "N/A"
 
     @property
-    def extra_state_attributes(self) -> dict:
-        """Inclut tifid, equipment, poid."""
+    def extra_state_attributes(self):
         return {
             "tifid": self._item.get("tifid"),
             "equipment": self._item.get("equipement"),
-            "poids": self._item.get("poids"),  # selon la donnée renvoyée par l'API
+            "poids": self._item.get("poids"),
         }
 
     @property
     def entity_category(self):
-        """
-        Marque ce capteur comme "Diagnostic",
-        il sera listé dans la catégorie Diagnostiques dans l'UI.
-        """
         return EntityCategory.DIAGNOSTIC
 
     @property
     def icon(self) -> str:
-        """Icône pour le diagnostic."""
         return "mdi:information-outline"
