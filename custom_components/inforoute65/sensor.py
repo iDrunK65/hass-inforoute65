@@ -113,7 +113,7 @@ class InforouteSectionCirculationSensor(BaseInforouteSensor):
         color = (self._item.get("color") or "").upper()
         niveau, texte = COLOR_MAP.get(color, ("??", "Inconnu"))
         return {
-            "level_color": color,
+            "level_color": "#" + color,
             "level": niveau,
             "level_title": texte,
         }
